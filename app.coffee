@@ -1,25 +1,20 @@
+UI = require './src/ui'
+
+emojiSize = 64
+emojiHalf = emojiSize/2
+emojiIndex = 0
+
 setup = ->
   console.log 'setup'
   createCanvas 640, 480
-
-  # UI
-  fileInput = createFileInput loadBg
-  spacing = createSlider 0, 100, 0
-  console.log spacing
-
-loadBg = (file) ->
-  return unless file.type is 'image'
-  reader = new FileReader()
-  reader.onload = (event) ->
-    loadImage event.target.result, (img) ->
-      resizeCanvas img.width, img.height
-      image img, 0, 0
-  reader.readAsDataURL file.file
+  UI.setup()
 
 draw = ->
   # console.log 'draw'
   if mouseIsPressed
-    ellipse mouseX, mouseY, 10, 10
+    emojiIndex = (emojiIndex+1) % UI.emoji.length
+    emoji = UI.emoji[emojiIndex]
+    image emoji, mouseX-emojiHalf, mouseY-emojiHalf
 
 window.setup = setup
 window.draw = draw
