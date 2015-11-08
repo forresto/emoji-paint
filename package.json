@@ -1,6 +1,6 @@
 {
   "name": "emoji-paint",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "prototype tiling emoji pattern",
   "main": "index.js",
   "author": "Forrest Oliphant",
