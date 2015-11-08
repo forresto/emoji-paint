@@ -45,9 +45,11 @@ var EmojiPaint =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var UI, draw, emojiHalf, emojiIndex, emojiSize, setup;
+	var TAU, UI, calcDistance, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, lastX, lastY, pressedX, pressedY;
 
 	UI = __webpack_require__(1);
+
+	TAU = Math.PI * 2;
 
 	emojiSize = 64;
 
@@ -55,70 +57,124 @@ var EmojiPaint =
 
 	emojiIndex = 0;
 
-	setup = function() {
+	pressedX = null;
+
+	pressedY = null;
+
+	lastX = null;
+
+	lastY = null;
+
+	firstInStroke = false;
+
+	window.setup = function() {
 	  console.log('setup');
 	  createCanvas(640, 480);
 	  return UI.setup();
 	};
 
-	draw = function() {
-	  var emoji;
-	  if (mouseIsPressed) {
-	    emojiIndex = (emojiIndex + 1) % UI.emoji.length;
-	    emoji = UI.emoji[emojiIndex];
-	    return image(emoji, mouseX - emojiHalf, mouseY - emojiHalf);
-	  }
+	window.mousePressed = function() {
+	  firstInStroke = true;
+	  lastX = pressedX = mouseX;
+	  return lastY = pressedY = mouseY;
 	};
 
-	window.setup = setup;
+	window.mouseReleased = function() {
+	  var emoji;
+	  if (!(mouseX === pressedX && mouseY === pressedY)) {
+	    return;
+	  }
+	  emoji = UI.emoji[emojiIndex];
+	  return drawOne(emoji, mouseX, mouseY);
+	};
 
-	window.draw = draw;
+	window.mouseDragged = function(event) {
+	  var distanceFromLast, emoji, spacing;
+	  spacing = UI.spacing;
+	  distanceFromLast = calcDistance(mouseX, mouseY, lastX, lastY);
+	  if (!((firstInStroke && distanceFromLast > 5) || (distanceFromLast > spacing))) {
+	    return;
+	  }
+	  firstInStroke = false;
+	  emoji = UI.emoji[emojiIndex];
+	  drawOne(emoji, mouseX, mouseY, lastX, lastY);
+	  lastX = mouseX;
+	  return lastY = mouseY;
+	};
+
+	drawOne = function(emoji, x1, y1, x2, y2) {
+	  var angle;
+	  if (x2 == null) {
+	    x2 = x1;
+	  }
+	  if (y2 == null) {
+	    y2 = y1 - 1;
+	  }
+	  angle = Math.atan2(y2 - y1, x2 - x1) + TAU / 4;
+	  translate(x1, y1);
+	  rotate(angle);
+	  image(emoji, -emojiHalf, -emojiHalf);
+	  rotate(-angle);
+	  return translate(-x1, -y1);
+	};
+
+	calcDistance = function(x1, y1, x2, y2) {
+	  var dx, dy;
+	  dx = x2 - x1;
+	  dy = y2 - y1;
+	  return Math.sqrt(dx * dx + dy * dy);
+	};
 
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EmojiOne, changeEmoji, changeSpacing, emojiInput, emojiPreview, loadBg, mod;
+	var EmojiOne, changeEmoji, changeSpacing, clickImage, defaultInput, emojiInput, emojiPreview, loadBg, mod;
 
 	EmojiOne = __webpack_require__(2);
+
+	defaultInput = ':rose: :fire: :star2: :green_heart: :ghost: :smiling_imp:';
 
 	emojiPreview = null;
 
 	emojiInput = null;
 
 	mod = {
-	  spacing: 100,
+	  spacing: 48,
 	  emoji: [],
 	  setup: function() {
-	    var div;
+	    var div, spacingSlider;
 	    div = createDiv('');
+	    div.child(createDiv('canvas'));
+	    div.child(createButton('save image').mouseClicked(function() {
+	      return saveCanvas('emoji-paint', 'png');
+	    }));
+	    div.child(createButton('clear canvas').mouseClicked(function() {
+	      return resizeCanvas(width, height);
+	    }));
 	    div.child(createDiv('chose emoji'));
-	    emojiInput = createInput(':heart: :princess: :pineapple: :apple: :goat: :cow:').input(changeEmoji);
+	    emojiInput = createInput(defaultInput).input(changeEmoji);
+	    emojiInput.size(640);
 	    div.child(emojiInput);
-	    emojiPreview = createSpan('');
+	    emojiPreview = createDiv('');
 	    div.child(emojiPreview);
 	    changeEmoji();
 	    div.child(createDiv('change spacing'));
-	    div.child(createSlider(0, 100, mod.spacing).input(changeSpacing));
-	    div.child(createDiv('load a background image'));
-	    return div.child(createFileInput(loadBg));
+	    spacingSlider = createSlider(0, 100, mod.spacing).input(changeSpacing);
+	    spacingSlider.size(640);
+	    return div.child(spacingSlider);
 	  }
 	};
 
 	loadBg = function(file) {
-	  var reader;
 	  if (file.type !== 'image') {
 	    return;
 	  }
-	  reader = new FileReader();
-	  reader.onload = function(event) {
-	    return loadImage(event.target.result, function(img) {
-	      resizeCanvas(img.width, img.height);
-	      return image(img, 0, 0);
-	    });
-	  };
-	  return reader.readAsDataURL(file.file);
+	  return loadImage(file.data, function(img) {
+	    resizeCanvas(img.width, img.height);
+	    return image(img, 0, 0);
+	  });
 	};
 
 	changeSpacing = function(event) {
@@ -126,19 +182,41 @@ var EmojiPaint =
 	};
 
 	changeEmoji = function() {
-	  var child, emoji, i, input, len, ref;
+	  var child, emoji, i, input, len, ref, results;
 	  input = emojiInput.value();
 	  emoji = EmojiOne.toImage(EmojiOne.toShort(input));
 	  emojiPreview.html(emoji);
-	  emoji = [];
 	  ref = emojiPreview.elt.children;
+	  results = [];
 	  for (i = 0, len = ref.length; i < len; i++) {
 	    child = ref[i];
 	    if (child.nodeName === 'IMG') {
-	      emoji.push(loadImage(child.src));
+	      if (!mod.emoji[0]) {
+	        mod.emoji = [loadImage(child.src)];
+	      }
+	      results.push(child.addEventListener('click', clickImage));
+	    } else {
+	      results.push(void 0);
 	    }
 	  }
-	  return mod.emoji = emoji;
+	  return results;
+	};
+
+	clickImage = function(event) {
+	  var child, i, img, len, ref, results;
+	  img = event.target;
+	  mod.emoji = [loadImage(img.src)];
+	  ref = emojiPreview.elt.children;
+	  results = [];
+	  for (i = 0, len = ref.length; i < len; i++) {
+	    child = ref[i];
+	    if (child.nodeName === 'IMG') {
+	      results.push(child.className = img === child ? 'selected' : '');
+	    } else {
+	      results.push(void 0);
+	    }
+	  }
+	  return results;
 	};
 
 	module.exports = mod;
