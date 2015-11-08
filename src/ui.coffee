@@ -11,7 +11,7 @@ module.exports = UI =
   spacing: 32
   emoji: null
   palette: []
-  auto: true 
+  auto: false 
   wrap: true
   setup: () ->
     createDiv 'canvas'

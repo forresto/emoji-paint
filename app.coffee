@@ -12,7 +12,6 @@ lastX = null
 lastY = null
 wiggle = 5
 firstInStroke = false
-autoIndex = 0
 autoX = width/2
 autoY = height/2
 autoAngle = TAU/4
@@ -37,9 +36,7 @@ window.draw = ->
   autoX = x % width
   autoY = y % height
   autoAngle += autoAngleDelta
-  autoIndex++
-  if autoIndex is 10
-    autoIndex = 0
+  if Math.random() < 0.01
     autoAngleDelta = 2*Math.random() - 1
     emoji = UI.palette[Math.floor(Math.random()*UI.palette.length)]
     console.log emoji
