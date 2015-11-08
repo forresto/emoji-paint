@@ -12,6 +12,11 @@ lastX = null
 lastY = null
 wiggle = 5
 firstInStroke = false
+autoIndex = 0
+autoX = width/2
+autoY = height/2
+autoAngle = TAU/4
+autoAngleDelta = TAU/360
 
 window.setup = ->
   canvas = createCanvas width, height
@@ -24,8 +29,22 @@ window.setup = ->
   UI.setup()
 
 window.draw = ->
-  {auto} = UI
-  return unless auto
+  {auto, spacing, emoji} = UI
+  return unless auto and emoji
+  x = autoX + spacing * Math.cos autoAngle
+  y = autoY + spacing * Math.sin autoAngle
+  drawAndWrap emoji, x, y, autoX, autoY
+  autoX = x % width
+  autoY = y % height
+  autoAngle += autoAngleDelta
+  autoIndex++
+  if autoIndex is 10
+    autoIndex = 0
+    autoAngleDelta = 2*Math.random() - 1
+    emoji = UI.palette[Math.floor(Math.random()*UI.palette.length)]
+    console.log emoji
+    UI.emoji = emoji
+
 
 mouseDown = (event) ->
   firstInStroke = true
