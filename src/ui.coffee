@@ -1,7 +1,7 @@
 EmojiOne = require 'emojione'
 # EmojiOne.imagePathPNG = './node_modules/emojione/assets/png/'
 
-defaultInput = ':rose: :fire: :star2: :green_heart: :ghost: :smiling_imp:'
+defaultInput = ':rose: :hot_pepper: :sunflower: :star2: :green_heart: :ghost: :smiling_imp:'
 
 emojiPreview = null
 emojiInput = null
@@ -10,10 +10,21 @@ mod =
   size: 48
   spacing: 32
   emoji: []
+  auto: false
+  wrap: true
   setup: () ->
     div = createDiv('')
 
     div.child createDiv 'canvas'
+
+    div.child createSpan 'auto draw'
+    div.child createCheckbox('auto draw', mod.auto).changed ->
+      mod.auto = @checked()
+
+    div.child createSpan 'wrap around'
+    div.child createCheckbox('wrap around', mod.wrap).changed ->
+      mod.wrap = @checked()
+
     div.child createButton('save image').mouseClicked ->
       saveCanvas 'emoji-paint', 'png'
 

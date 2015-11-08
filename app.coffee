@@ -1,6 +1,8 @@
 UI = require './src/ui'
 
 TAU = Math.PI * 2
+width = 640
+height = 480
 emojiSize = 64
 emojiHalf = emojiSize/2
 emojiIndex = 0
@@ -12,7 +14,7 @@ wiggle = 5
 firstInStroke = false
 
 window.setup = ->
-  canvas = createCanvas 640, 480
+  canvas = createCanvas width, height
   canvas.elt.addEventListener 'mousedown', mouseDown
   canvas.elt.addEventListener 'touchstart', touchStart
   canvas.elt.addEventListener 'mousemove', mouseMove
@@ -20,6 +22,10 @@ window.setup = ->
   window.addEventListener 'mouseup', mouseUp
   window.addEventListener 'touchend', mouseUp
   UI.setup()
+
+window.draw = ->
+  {auto} = UI
+  return unless auto
 
 mouseDown = (event) ->
   firstInStroke = true
@@ -36,7 +42,7 @@ mouseUp = (event) ->
   y = mouseY or touchY
   return unless (calcDistance(x, y, pressedX, pressedY) <= wiggle)
   emoji = UI.emoji[emojiIndex]
-  drawOne emoji, x, y, x, y-1
+  drawAndWrap emoji, x, y, x, y-1
 
 touchMove = (event) ->
   return unless touchIsDown
@@ -54,19 +60,42 @@ move = (x, y) ->
   return unless (firstInStroke and distanceFromLast > wiggle) or (distanceFromLast > spacing)
   firstInStroke = false
   emoji = UI.emoji[emojiIndex]
-  drawOne emoji, x, y, lastX, lastY
+  drawAndWrap emoji, x, y, lastX, lastY
   lastX = x
   lastY = y
 
-drawOne = (emoji, x1, y1, x2, y2) ->
-  {size} = UI
+drawAndWrap = (emoji, x, y, px, py) ->
+  {size, wrap} = UI
   half = size/2
-  angle = Math.atan2(y2-y1, x2-x1) + TAU/4
-  translate x1, y1
+  angle = Math.atan2(py-y, px-x) + TAU/4
+  drawOne emoji, x, y, size, angle
+
+  return unless wrap
+  if x < half
+    drawOne emoji, x+width, y, size, angle
+    if y < half
+      drawOne emoji, x+width, y+height, size, angle
+  if x > width - half
+    drawOne emoji, x-width, y, size, angle
+    if y > height - half
+      drawOne emoji, x-width, y-height, size, angle
+  if y < half
+    drawOne emoji, x, y+height, size, angle
+    if x > width - half
+      drawOne emoji, x-width, y+height, size, angle
+  if y > height - half
+    drawOne emoji, x, y-height, size, angle
+    if x < half
+      drawOne emoji, x+width, y-height, size, angle
+
+drawOne = (emoji, x, y, size, angle) ->
+  half = size/2
+  translate x, y
   rotate angle
   image emoji, 0, 0, emojiSize, emojiSize, -half, -half, size, size
   rotate -angle
-  translate -x1, -y1
+  translate -x, -y
+
 
 calcDistance = (x1, y1, x2, y2) ->
   dx = x2-x1
