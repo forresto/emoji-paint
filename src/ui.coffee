@@ -11,26 +11,29 @@ mod =
     div = createDiv('')
 
     div.child createDiv 'chose emoji'
-    emojiInput = createInput( ':heart: :princess: :pineapple: :apple: :goat: :cow:' ).input( changeEmoji )
+    emojiInput = createInput( ':heart: :princess: :pineapple: :apple: :goat: :cow:' )
+      .input( changeEmoji )
+    emojiInput.size 640
     div.child emojiInput
-    emojiPreview = createSpan ''
+    emojiPreview = createDiv ''
     div.child emojiPreview
     changeEmoji()
 
     div.child createDiv 'change spacing'
-    div.child createSlider( 0, 100, mod.spacing ).input( changeSpacing )
+    spacingSlider = createSlider( 0, 100, mod.spacing )
+      .input( changeSpacing )
+    spacingSlider.size 640
+    div.child spacingSlider
 
-    div.child createDiv 'load a background image'
-    div.child createFileInput loadBg
+    # Waiting on https://github.com/processing/p5.js/issues/1085
+    # div.child createDiv 'load a background image'
+    # div.child createFileInput loadBg
 
 loadBg = (file) ->
   return unless file.type is 'image'
-  reader = new FileReader()
-  reader.onload = (event) ->
-    loadImage event.target.result, (img) ->
-      resizeCanvas img.width, img.height
-      image img, 0, 0
-  reader.readAsDataURL file.file
+  loadImage file.data, (img) ->
+    resizeCanvas img.width, img.height
+    image img, 0, 0
 
 changeSpacing = (event) ->
   mod.spacing = parseInt(event.target.value)
