@@ -45,7 +45,7 @@ var EmojiPaint =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var TAU, UI, calcDistance, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, lastX, lastY, pressedX, pressedY, wiggle;
+	var TAU, UI, calcDistance, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, lastX, lastY, mouseDown, mouseMove, mouseUp, move, pressedX, pressedY, touchMove, touchStart, wiggle;
 
 	UI = __webpack_require__(1);
 
@@ -70,38 +70,70 @@ var EmojiPaint =
 	firstInStroke = false;
 
 	window.setup = function() {
-	  console.log('setup');
-	  createCanvas(640, 480);
+	  var canvas;
+	  canvas = createCanvas(640, 480);
+	  canvas.elt.addEventListener('mousedown', mouseDown);
+	  canvas.elt.addEventListener('touchstart', touchStart);
+	  canvas.elt.addEventListener('mousemove', mouseMove);
+	  canvas.elt.addEventListener('touchmove', touchMove);
+	  window.addEventListener('mouseup', mouseUp);
+	  window.addEventListener('touchend', mouseUp);
 	  return UI.setup();
 	};
 
-	window.mousePressed = function() {
+	mouseDown = function(event) {
 	  firstInStroke = true;
 	  lastX = pressedX = mouseX;
 	  return lastY = pressedY = mouseY;
 	};
 
-	window.mouseReleased = function() {
-	  var emoji;
-	  if (!(calcDistance(mouseX, mouseY, pressedX, pressedY) <= wiggle)) {
+	touchStart = function(event) {
+	  lastX = pressedX = event.touches[0].clientX;
+	  return lastY = pressedY = event.touches[0].clientY;
+	};
+
+	mouseUp = function(event) {
+	  var emoji, x, y;
+	  if ((event.button != null) && (event.button !== 0)) {
+	    return;
+	  }
+	  x = mouseX || touchX;
+	  y = mouseY || touchY;
+	  if (!(calcDistance(x, y, pressedX, pressedY) <= wiggle)) {
 	    return;
 	  }
 	  emoji = UI.emoji[emojiIndex];
-	  return drawOne(emoji, mouseX, mouseY, mouseX, mouseY - 1);
+	  return drawOne(emoji, x, y, x, y - 1);
 	};
 
-	window.mouseDragged = function(event) {
+	touchMove = function(event) {
+	  if (!touchIsDown) {
+	    return;
+	  }
+	  event.preventDefault();
+	  return move(touchX, touchY);
+	};
+
+	mouseMove = function(event) {
+	  if (!mouseIsPressed) {
+	    return;
+	  }
+	  event.preventDefault();
+	  return move(mouseX, mouseY);
+	};
+
+	move = function(x, y) {
 	  var distanceFromLast, emoji, spacing;
 	  spacing = UI.spacing;
-	  distanceFromLast = calcDistance(mouseX, mouseY, lastX, lastY);
+	  distanceFromLast = calcDistance(x, y, lastX, lastY);
 	  if (!((firstInStroke && distanceFromLast > wiggle) || (distanceFromLast > spacing))) {
 	    return;
 	  }
 	  firstInStroke = false;
 	  emoji = UI.emoji[emojiIndex];
-	  drawOne(emoji, mouseX, mouseY, lastX, lastY);
-	  lastX = mouseX;
-	  return lastY = mouseY;
+	  drawOne(emoji, x, y, lastX, lastY);
+	  lastX = x;
+	  return lastY = y;
 	};
 
 	drawOne = function(emoji, x1, y1, x2, y2) {
