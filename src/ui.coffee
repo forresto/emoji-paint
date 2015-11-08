@@ -1,53 +1,47 @@
 EmojiOne = require 'emojione'
 # EmojiOne.imagePathPNG = './node_modules/emojione/assets/png/'
 
-defaultInput = ':rose: :hot_pepper: :sunflower: :star2: :green_heart: :ghost: :smiling_imp:'
+defaultInput = ':rose: :hot_pepper: :sunflower: :star2: :evergreen_tree: :ghost: :smiling_imp: :umbrella:'
 
-emojiPreview = null
+emojiPalette = null
 emojiInput = null
 
-mod =
+module.exports = UI =
   size: 48
   spacing: 32
-  emoji: []
-  auto: false
+  emoji: null
+  palette: []
+  auto: true 
   wrap: true
   setup: () ->
-    div = createDiv('')
+    createDiv 'canvas'
 
-    div.child createDiv 'canvas'
+    createCheckbox('auto draw', UI.auto).changed ->
+      UI.auto = @checked()
 
-    div.child createSpan 'auto draw'
-    div.child createCheckbox('auto draw', mod.auto).changed ->
-      mod.auto = @checked()
+    createCheckbox('wrap around', UI.wrap).changed ->
+      UI.wrap = @checked()
 
-    div.child createSpan 'wrap around'
-    div.child createCheckbox('wrap around', mod.wrap).changed ->
-      mod.wrap = @checked()
-
-    div.child createButton('save image').mouseClicked ->
+    createButton('save image').mouseClicked ->
       saveCanvas 'emoji-paint', 'png'
 
-    div.child createButton('clear canvas').mouseClicked ->
+    createButton('clear canvas').mouseClicked ->
       resizeCanvas width, height
 
-    div.child createDiv 'chose emoji'
+    createDiv 'chose emoji'
     emojiInput = createInput( defaultInput )
       .input( changeEmoji )
     emojiInput.size 640
-    div.child emojiInput
+    emojiInput
 
-    emojiPreview = createDiv ''
-    div.child emojiPreview
+    emojiPalette = createDiv ''
     changeEmoji()
 
-    div.child createDiv 'change spacing'
-    div.child createSpan 'size '
-    spacingSlider = createSlider( 1, 64, mod.size ).input( changeSize )
-    div.child spacingSlider
-    div.child createSpan 'spacing '
-    spacingSlider = createSlider( 1, 100, mod.spacing ).input( changeSpacing )
-    div.child spacingSlider
+    createDiv 'change spacing'
+    createSpan 'size '
+    createSlider( 1, 64, UI.size ).input( changeSize )
+    createSpan 'spacing '
+    createSlider( 1, 100, UI.spacing ).input( changeSpacing )
 
     # Waiting on https://github.com/processing/p5.js/issues/1085
     # div.child createDiv 'load a background image'
@@ -60,29 +54,33 @@ loadBg = (file) ->
     image img, 0, 0
 
 changeSize = (event) ->
-  mod.size = parseInt(event.target.value)
+  UI.size = parseInt(event.target.value)
 
 changeSpacing = (event) ->
-  mod.spacing = parseInt(event.target.value)
+  UI.spacing = parseInt(event.target.value)
 
 changeEmoji = ->
   input = emojiInput.value()
   emoji = EmojiOne.toImage EmojiOne.toShort input
-  emojiPreview.html emoji
+  dummy = document.createElement 'div'
+  dummy.innerHTML = emoji
+  emojiPalette.html ''
+  UI.palette = []
 
-  for child in emojiPreview.elt.children
+  for child in dummy.children
     if child.nodeName is 'IMG'
-      unless mod.emoji[0]
-        mod.emoji = [loadImage child.src]
-      child.addEventListener 'click', clickImage
+      img = createImg( child.src, child.alt ).mouseClicked( clickImage )
+      emojiPalette.child img
+      UI.palette.push img
+
+  emojiPalette.elt.firstChild.click()
 
 clickImage = (event) ->
   img = event.target
-  mod.emoji = [loadImage img.src]
-  for child in emojiPreview.elt.children
+  UI.emoji = loadImage img.src
+  for child in emojiPalette.elt.children
     if child.nodeName is 'IMG'
       child.className = if (img is child) then 'selected' else ''
 
-module.exports = mod
 
 

@@ -41,7 +41,7 @@ mouseUp = (event) ->
   x = mouseX or touchX
   y = mouseY or touchY
   return unless (calcDistance(x, y, pressedX, pressedY) <= wiggle)
-  emoji = UI.emoji[emojiIndex]
+  emoji = UI.emoji
   drawAndWrap emoji, x, y, x, y-1
 
 touchMove = (event) ->
@@ -59,7 +59,7 @@ move = (x, y) ->
   distanceFromLast = calcDistance(x, y, lastX, lastY)
   return unless (firstInStroke and distanceFromLast > wiggle) or (distanceFromLast > spacing)
   firstInStroke = false
-  emoji = UI.emoji[emojiIndex]
+  emoji = UI.emoji
   drawAndWrap emoji, x, y, lastX, lastY
   lastX = x
   lastY = y
