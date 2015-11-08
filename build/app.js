@@ -45,7 +45,7 @@ var EmojiPaint =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var TAU, UI, autoAngle, autoAngleDelta, autoX, autoY, calcDistance, drawAndWrap, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, height, lastX, lastY, mouseDown, mouseMove, mouseUp, move, pressedX, pressedY, touchMove, touchStart, width, wiggle;
+	var TAU, UI, autoAngle, autoAngleDelta, autoAngleDeltaDelta, autoX, autoY, calcDistance, drawAndWrap, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, height, lastX, lastY, mouseDown, mouseMove, mouseUp, move, pressedX, pressedY, touchMove, touchStart, width, wiggle;
 
 	UI = __webpack_require__(1);
 
@@ -81,6 +81,8 @@ var EmojiPaint =
 
 	autoAngleDelta = TAU / 360;
 
+	autoAngleDeltaDelta = TAU / 360 / 10;
+
 	window.setup = function() {
 	  var canvas;
 	  canvas = createCanvas(width, height);
@@ -105,8 +107,10 @@ var EmojiPaint =
 	  autoX = x % width;
 	  autoY = y % height;
 	  autoAngle += autoAngleDelta;
+	  autoAngleDelta += autoAngleDeltaDelta;
 	  if (Math.random() < 0.01) {
 	    autoAngleDelta = 2 * Math.random() - 1;
+	    autoAngleDeltaDelta = 0.2 * Math.random() - 0.1;
 	    emoji = UI.palette[Math.floor(Math.random() * UI.palette.length)];
 	    console.log(emoji);
 	    return UI.emoji = emoji;

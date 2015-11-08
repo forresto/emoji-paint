@@ -16,6 +16,7 @@ autoX = width/2
 autoY = height/2
 autoAngle = TAU/4
 autoAngleDelta = TAU/360
+autoAngleDeltaDelta = TAU/360/10
 
 window.setup = ->
   canvas = createCanvas width, height
@@ -36,8 +37,10 @@ window.draw = ->
   autoX = x % width
   autoY = y % height
   autoAngle += autoAngleDelta
+  autoAngleDelta += autoAngleDeltaDelta
   if Math.random() < 0.01
     autoAngleDelta = 2*Math.random() - 1
+    autoAngleDeltaDelta = 0.2*Math.random() - 0.1
     emoji = UI.palette[Math.floor(Math.random()*UI.palette.length)]
     console.log emoji
     UI.emoji = emoji
