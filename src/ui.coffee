@@ -1,20 +1,30 @@
 EmojiOne = require 'emojione'
 # EmojiOne.imagePathPNG = './node_modules/emojione/assets/png/'
 
+defaultInput = ':rose: :fire: :star2: :green_heart: :ghost: :smiling_imp:'
+
 emojiPreview = null
 emojiInput = null
 
 mod =
-  spacing: 100
+  spacing: 48
   emoji: []
   setup: () ->
     div = createDiv('')
 
+    div.child createDiv 'canvas'
+    div.child createButton('save image').mouseClicked ->
+      saveCanvas 'emoji-paint', 'png'
+
+    div.child createButton('clear canvas').mouseClicked ->
+      resizeCanvas width, height
+
     div.child createDiv 'chose emoji'
-    emojiInput = createInput( ':heart: :princess: :pineapple: :apple: :goat: :cow:' )
+    emojiInput = createInput( defaultInput )
       .input( changeEmoji )
     emojiInput.size 640
     div.child emojiInput
+
     emojiPreview = createDiv ''
     div.child emojiPreview
     changeEmoji()
@@ -43,13 +53,18 @@ changeEmoji = ->
   emoji = EmojiOne.toImage EmojiOne.toShort input
   emojiPreview.html emoji
 
-  emoji = []
   for child in emojiPreview.elt.children
     if child.nodeName is 'IMG'
-      emoji.push loadImage child.src
+      unless mod.emoji[0]
+        mod.emoji = [loadImage child.src]
+      child.addEventListener 'click', clickImage
 
-  mod.emoji = emoji
-
+clickImage = (event) ->
+  img = event.target
+  mod.emoji = [loadImage img.src]
+  for child in emojiPreview.elt.children
+    if child.nodeName is 'IMG'
+      child.className = if (img is child) then 'selected' else ''
 
 module.exports = mod
 

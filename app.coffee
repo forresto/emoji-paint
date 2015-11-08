@@ -8,6 +8,7 @@ pressedX = null
 pressedY = null
 lastX = null
 lastY = null
+firstInStroke = false
 
 window.setup = ->
   console.log 'setup'
@@ -15,29 +16,34 @@ window.setup = ->
   UI.setup()
 
 window.mousePressed = ->
+  firstInStroke = true
   lastX = pressedX = mouseX
   lastY = pressedY = mouseY
 
 window.mouseReleased = ->
   return unless mouseX is pressedX and mouseY is pressedY
-  emojiIndex = (emojiIndex+1) % UI.emoji.length
   emoji = UI.emoji[emojiIndex]
-  image emoji, mouseX-emojiHalf, mouseY-emojiHalf
+  drawOne emoji, mouseX, mouseY
 
 window.mouseDragged = (event) ->
-  return unless calcDistance(mouseX, mouseY, lastX, lastY) > 10
+  {spacing} = UI
+  distanceFromLast = calcDistance(mouseX, mouseY, lastX, lastY)
+  return unless (firstInStroke and distanceFromLast > 5) or (distanceFromLast > spacing)
+  firstInStroke = false
   emoji = UI.emoji[emojiIndex]
-  angle = Math.atan2(mouseY-lastY, mouseX-lastX) + TAU/4
-  drawOne emoji, mouseX, mouseY, angle
+  drawOne emoji, mouseX, mouseY, lastX, lastY
   lastX = mouseX
   lastY = mouseY
 
-drawOne = (emoji, x, y, angle) ->
-  translate x, y
+drawOne = (emoji, x1, y1, x2, y2) ->
+  x2 ?= x1
+  y2 ?= y1 - 1
+  angle = Math.atan2(y2-y1, x2-x1) + TAU/4
+  translate x1, y1
   rotate angle
   image emoji, -emojiHalf, -emojiHalf
   rotate -angle
-  translate -x, -y
+  translate -x1, -y1
 
 calcDistance = (x1, y1, x2, y2) ->
   dx = x2-x1
