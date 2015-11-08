@@ -45,7 +45,7 @@ var EmojiPaint =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var TAU, UI, calcDistance, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, lastX, lastY, pressedX, pressedY;
+	var TAU, UI, calcDistance, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, lastX, lastY, pressedX, pressedY, wiggle;
 
 	UI = __webpack_require__(1);
 
@@ -65,6 +65,8 @@ var EmojiPaint =
 
 	lastY = null;
 
+	wiggle = 5;
+
 	firstInStroke = false;
 
 	window.setup = function() {
@@ -81,18 +83,18 @@ var EmojiPaint =
 
 	window.mouseReleased = function() {
 	  var emoji;
-	  if (!(mouseX === pressedX && mouseY === pressedY)) {
+	  if (!(calcDistance(mouseX, mouseY, pressedX, pressedY) <= wiggle)) {
 	    return;
 	  }
 	  emoji = UI.emoji[emojiIndex];
-	  return drawOne(emoji, mouseX, mouseY);
+	  return drawOne(emoji, mouseX, mouseY, mouseX, mouseY - 1);
 	};
 
 	window.mouseDragged = function(event) {
 	  var distanceFromLast, emoji, spacing;
 	  spacing = UI.spacing;
 	  distanceFromLast = calcDistance(mouseX, mouseY, lastX, lastY);
-	  if (!((firstInStroke && distanceFromLast > 5) || (distanceFromLast > spacing))) {
+	  if (!((firstInStroke && distanceFromLast > wiggle) || (distanceFromLast > spacing))) {
 	    return;
 	  }
 	  firstInStroke = false;
@@ -103,17 +105,13 @@ var EmojiPaint =
 	};
 
 	drawOne = function(emoji, x1, y1, x2, y2) {
-	  var angle;
-	  if (x2 == null) {
-	    x2 = x1;
-	  }
-	  if (y2 == null) {
-	    y2 = y1 - 1;
-	  }
+	  var angle, half, size;
+	  size = UI.size;
+	  half = size / 2;
 	  angle = Math.atan2(y2 - y1, x2 - x1) + TAU / 4;
 	  translate(x1, y1);
 	  rotate(angle);
-	  image(emoji, -emojiHalf, -emojiHalf);
+	  image(emoji, 0, 0, emojiSize, emojiSize, -half, -half, size, size);
 	  rotate(-angle);
 	  return translate(-x1, -y1);
 	};
@@ -130,7 +128,7 @@ var EmojiPaint =
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EmojiOne, changeEmoji, changeSpacing, clickImage, defaultInput, emojiInput, emojiPreview, loadBg, mod;
+	var EmojiOne, changeEmoji, changeSize, changeSpacing, clickImage, defaultInput, emojiInput, emojiPreview, loadBg, mod;
 
 	EmojiOne = __webpack_require__(2);
 
@@ -141,7 +139,8 @@ var EmojiPaint =
 	emojiInput = null;
 
 	mod = {
-	  spacing: 48,
+	  size: 48,
+	  spacing: 32,
 	  emoji: [],
 	  setup: function() {
 	    var div, spacingSlider;
@@ -161,8 +160,11 @@ var EmojiPaint =
 	    div.child(emojiPreview);
 	    changeEmoji();
 	    div.child(createDiv('change spacing'));
-	    spacingSlider = createSlider(0, 100, mod.spacing).input(changeSpacing);
-	    spacingSlider.size(640);
+	    div.child(createSpan('size '));
+	    spacingSlider = createSlider(1, 64, mod.size).input(changeSize);
+	    div.child(spacingSlider);
+	    div.child(createSpan('spacing '));
+	    spacingSlider = createSlider(1, 100, mod.spacing).input(changeSpacing);
 	    return div.child(spacingSlider);
 	  }
 	};
@@ -175,6 +177,10 @@ var EmojiPaint =
 	    resizeCanvas(img.width, img.height);
 	    return image(img, 0, 0);
 	  });
+	};
+
+	changeSize = function(event) {
+	  return mod.size = parseInt(event.target.value);
 	};
 
 	changeSpacing = function(event) {
