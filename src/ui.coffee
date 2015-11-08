@@ -7,7 +7,8 @@ emojiPreview = null
 emojiInput = null
 
 mod =
-  spacing: 48
+  size: 48
+  spacing: 32
   emoji: []
   setup: () ->
     div = createDiv('')
@@ -30,9 +31,11 @@ mod =
     changeEmoji()
 
     div.child createDiv 'change spacing'
-    spacingSlider = createSlider( 0, 100, mod.spacing )
-      .input( changeSpacing )
-    spacingSlider.size 640
+    div.child createSpan 'size '
+    spacingSlider = createSlider( 1, 64, mod.size ).input( changeSize )
+    div.child spacingSlider
+    div.child createSpan 'spacing '
+    spacingSlider = createSlider( 1, 100, mod.spacing ).input( changeSpacing )
     div.child spacingSlider
 
     # Waiting on https://github.com/processing/p5.js/issues/1085
@@ -44,6 +47,9 @@ loadBg = (file) ->
   loadImage file.data, (img) ->
     resizeCanvas img.width, img.height
     image img, 0, 0
+
+changeSize = (event) ->
+  mod.size = parseInt(event.target.value)
 
 changeSpacing = (event) ->
   mod.spacing = parseInt(event.target.value)

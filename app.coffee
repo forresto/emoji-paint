@@ -8,6 +8,7 @@ pressedX = null
 pressedY = null
 lastX = null
 lastY = null
+wiggle = 5
 firstInStroke = false
 
 window.setup = ->
@@ -21,14 +22,14 @@ window.mousePressed = ->
   lastY = pressedY = mouseY
 
 window.mouseReleased = ->
-  return unless mouseX is pressedX and mouseY is pressedY
+  return unless (calcDistance(mouseX, mouseY, pressedX, pressedY) <= wiggle)
   emoji = UI.emoji[emojiIndex]
-  drawOne emoji, mouseX, mouseY
+  drawOne emoji, mouseX, mouseY, mouseX, mouseY-1
 
 window.mouseDragged = (event) ->
   {spacing} = UI
   distanceFromLast = calcDistance(mouseX, mouseY, lastX, lastY)
-  return unless (firstInStroke and distanceFromLast > 5) or (distanceFromLast > spacing)
+  return unless (firstInStroke and distanceFromLast > wiggle) or (distanceFromLast > spacing)
   firstInStroke = false
   emoji = UI.emoji[emojiIndex]
   drawOne emoji, mouseX, mouseY, lastX, lastY
@@ -36,12 +37,12 @@ window.mouseDragged = (event) ->
   lastY = mouseY
 
 drawOne = (emoji, x1, y1, x2, y2) ->
-  x2 ?= x1
-  y2 ?= y1 - 1
+  {size} = UI
+  half = size/2
   angle = Math.atan2(y2-y1, x2-x1) + TAU/4
   translate x1, y1
   rotate angle
-  image emoji, -emojiHalf, -emojiHalf
+  image emoji, 0, 0, emojiSize, emojiSize, -half, -half, size, size
   rotate -angle
   translate -x1, -y1
 
