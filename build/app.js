@@ -45,7 +45,7 @@ var EmojiPaint =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var TAU, UI, autoAngle, autoAngleDelta, autoAngleDeltaDelta, autoX, autoY, calcDistance, drawAndWrap, drawOne, emojiHalf, emojiIndex, emojiSize, firstInStroke, height, lastX, lastY, mouseDown, mouseMove, mouseUp, move, pressedX, pressedY, touchMove, touchStart, width, wiggle;
+	var TAU, UI, autoAngle, autoAngleDelta, autoAngleDeltaDelta, autoX, autoY, calcDistance, drawAndWrap, drawOne, drawWithSymmetry, emojiHalf, emojiIndex, emojiSize, firstInStroke, height, lastX, lastY, mouseDown, mouseMove, mouseUp, move, pressedX, pressedY, touchMove, touchStart, width, wiggle;
 
 	UI = __webpack_require__(1);
 
@@ -103,7 +103,7 @@ var EmojiPaint =
 	  }
 	  x = autoX + spacing * Math.cos(autoAngle);
 	  y = autoY + spacing * Math.sin(autoAngle);
-	  drawAndWrap(emoji, x, y, autoX, autoY);
+	  drawWithSymmetry(emoji, x, y, autoX, autoY);
 	  autoX = x % width;
 	  autoY = y % height;
 	  autoAngle += autoAngleDelta;
@@ -112,7 +112,6 @@ var EmojiPaint =
 	    autoAngleDelta = 2 * Math.random() - 1;
 	    autoAngleDeltaDelta = 0.2 * Math.random() - 0.1;
 	    emoji = UI.palette[Math.floor(Math.random() * UI.palette.length)];
-	    console.log(emoji);
 	    return UI.emoji = emoji;
 	  }
 	};
@@ -139,7 +138,7 @@ var EmojiPaint =
 	    return;
 	  }
 	  emoji = UI.emoji;
-	  return drawAndWrap(emoji, x, y, x, y - 1);
+	  return drawWithSymmetry(emoji, x, y, x, y - 1);
 	};
 
 	touchMove = function(event) {
@@ -167,9 +166,26 @@ var EmojiPaint =
 	  }
 	  firstInStroke = false;
 	  emoji = UI.emoji;
-	  drawAndWrap(emoji, x, y, lastX, lastY);
+	  drawWithSymmetry(emoji, x, y, lastX, lastY);
 	  lastX = x;
 	  return lastY = y;
+	};
+
+	drawWithSymmetry = function(emoji, x, y, px, py) {
+	  var angle, h, i, j, ref, results, symmetry, w;
+	  symmetry = UI.symmetry;
+	  w = width / 2;
+	  h = height / 2;
+	  results = [];
+	  for (i = j = 0, ref = symmetry; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+	    angle = TAU / symmetry * i;
+	    translate(w, h);
+	    rotate(angle);
+	    drawAndWrap(emoji, x - w, y - h, px - w, py - h);
+	    rotate(-angle);
+	    results.push(translate(-w, -h));
+	  }
+	  return results;
 	};
 
 	drawAndWrap = function(emoji, x, y, px, py) {
@@ -181,30 +197,14 @@ var EmojiPaint =
 	  if (!wrap) {
 	    return;
 	  }
-	  if (x < half) {
-	    drawOne(emoji, x + width, y, size, angle);
-	    if (y < half) {
-	      drawOne(emoji, x + width, y + height, size, angle);
-	    }
-	  }
-	  if (x > width - half) {
-	    drawOne(emoji, x - width, y, size, angle);
-	    if (y > height - half) {
-	      drawOne(emoji, x - width, y - height, size, angle);
-	    }
-	  }
-	  if (y < half) {
-	    drawOne(emoji, x, y + height, size, angle);
-	    if (x > width - half) {
-	      drawOne(emoji, x - width, y + height, size, angle);
-	    }
-	  }
-	  if (y > height - half) {
-	    drawOne(emoji, x, y - height, size, angle);
-	    if (x < half) {
-	      return drawOne(emoji, x + width, y - height, size, angle);
-	    }
-	  }
+	  drawOne(emoji, x + width, y, size, angle);
+	  drawOne(emoji, x + width, y + height, size, angle);
+	  drawOne(emoji, x - width, y, size, angle);
+	  drawOne(emoji, x - width, y - height, size, angle);
+	  drawOne(emoji, x, y + height, size, angle);
+	  drawOne(emoji, x - width, y + height, size, angle);
+	  drawOne(emoji, x, y - height, size, angle);
+	  return drawOne(emoji, x + width, y - height, size, angle);
 	};
 
 	drawOne = function(emoji, x, y, size, angle) {
@@ -229,11 +229,11 @@ var EmojiPaint =
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var EmojiOne, UI, changeEmoji, changeSize, changeSpacing, clickImage, defaultInput, emojiInput, emojiPalette, loadBg;
+	var EmojiOne, UI, changeEmoji, clickImage, defaultInput, emojiInput, emojiPalette, loadBg;
 
 	EmojiOne = __webpack_require__(2);
 
-	defaultInput = ':rose: :hot_pepper: :sunflower: :star2: :evergreen_tree: :ghost: :smiling_imp: :umbrella:';
+	defaultInput = ':rose: :hot_pepper: :sunflower: :star2: 😃 :evergreen_tree: :ghost: :umbrella:';
 
 	emojiPalette = null;
 
@@ -246,31 +246,40 @@ var EmojiPaint =
 	  palette: [],
 	  auto: false,
 	  wrap: true,
+	  symmetry: 2,
 	  setup: function() {
 	    createDiv('canvas');
-	    createCheckbox('auto draw', UI.auto).changed(function() {
-	      return UI.auto = this.checked();
-	    });
-	    createCheckbox('wrap around', UI.wrap).changed(function() {
-	      return UI.wrap = this.checked();
-	    });
 	    createButton('save image').mouseClicked(function() {
 	      return saveCanvas('emoji-paint', 'png');
 	    });
 	    createButton('clear canvas').mouseClicked(function() {
 	      return resizeCanvas(width, height);
 	    });
-	    createDiv('chose emoji');
+	    createDiv('chose emoji palette');
 	    emojiInput = createInput(defaultInput).input(changeEmoji);
 	    emojiInput.size(640);
 	    emojiInput;
 	    emojiPalette = createDiv('');
 	    changeEmoji();
-	    createDiv('change spacing');
+	    createDiv('drawing');
+	    createCheckbox('auto draw ', UI.auto).changed(function() {
+	      return UI.auto = this.checked();
+	    });
+	    createCheckbox('wrap around ', UI.wrap).changed(function() {
+	      return UI.wrap = this.checked();
+	    });
+	    createSlider(1, 17, UI.symmetry).input(function() {
+	      return UI.symmetry = this.value();
+	    });
+	    createSpan('symmetry ');
+	    createSlider(1, 64, UI.size).input(function() {
+	      return UI.size = this.value();
+	    });
 	    createSpan('size ');
-	    createSlider(1, 64, UI.size).input(changeSize);
-	    createSpan('spacing ');
-	    return createSlider(1, 100, UI.spacing).input(changeSpacing);
+	    createSlider(1, 100, UI.spacing).input(function() {
+	      return UI.spacing = this.value();
+	    });
+	    return createSpan('spacing ');
 	  }
 	};
 
@@ -282,14 +291,6 @@ var EmojiPaint =
 	    resizeCanvas(img.width, img.height);
 	    return image(img, 0, 0);
 	  });
-	};
-
-	changeSize = function(event) {
-	  return UI.size = parseInt(event.target.value);
-	};
-
-	changeSpacing = function(event) {
-	  return UI.spacing = parseInt(event.target.value);
 	};
 
 	changeEmoji = function() {
