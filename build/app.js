@@ -189,12 +189,12 @@ var EmojiPaint =
 	};
 
 	drawAndWrap = function(emoji, x, y, px, py) {
-	  var angle, half, size, wrap;
-	  size = UI.size, wrap = UI.wrap;
+	  var angle, half, size, symmetry, wrap;
+	  size = UI.size, wrap = UI.wrap, symmetry = UI.symmetry;
 	  half = size / 2;
 	  angle = Math.atan2(py - y, px - x) + TAU / 4;
 	  drawOne(emoji, x, y, size, angle);
-	  if (!wrap) {
+	  if (!(wrap && symmetry <= 2)) {
 	    return;
 	  }
 	  drawOne(emoji, x + width, y, size, angle);

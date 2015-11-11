@@ -95,12 +95,12 @@ drawWithSymmetry = (emoji, x, y, px, py) ->
     translate -w, -h
 
 drawAndWrap = (emoji, x, y, px, py) ->
-  {size, wrap} = UI
+  {size, wrap, symmetry} = UI
   half = size/2
   angle = Math.atan2(py-y, px-x) + TAU/4
   drawOne emoji, x, y, size, angle
 
-  return unless wrap
+  return unless wrap and symmetry <= 2
   drawOne emoji, x+width, y, size, angle
   drawOne emoji, x+width, y+height, size, angle
   drawOne emoji, x-width, y, size, angle
