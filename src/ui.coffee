@@ -1,7 +1,7 @@
 EmojiOne = require 'emojione'
 # EmojiOne.imagePathPNG = './node_modules/emojione/assets/png/'
 
-defaultInput = ':rose: :hot_pepper: :sunflower: :star2: :evergreen_tree: :ghost: :smiling_imp: :umbrella:'
+defaultInput = ':rose: :hot_pepper: :sunflower: :star2: 😃 :evergreen_tree: :ghost: :umbrella:'
 
 emojiPalette = null
 emojiInput = null
@@ -13,22 +13,18 @@ module.exports = UI =
   palette: []
   auto: false 
   wrap: true
+  symmetry: 2
   setup: () ->
     createDiv 'canvas'
-
-    createCheckbox('auto draw', UI.auto).changed ->
-      UI.auto = @checked()
-
-    createCheckbox('wrap around', UI.wrap).changed ->
-      UI.wrap = @checked()
-
+    # Waiting on https://github.com/processing/p5.js/issues/1085
+    # div.child createDiv 'load a background image'
+    # div.child createFileInput loadBg
     createButton('save image').mouseClicked ->
       saveCanvas 'emoji-paint', 'png'
-
     createButton('clear canvas').mouseClicked ->
       resizeCanvas width, height
 
-    createDiv 'chose emoji'
+    createDiv 'chose emoji palette'
     emojiInput = createInput( defaultInput )
       .input( changeEmoji )
     emojiInput.size 640
@@ -37,27 +33,26 @@ module.exports = UI =
     emojiPalette = createDiv ''
     changeEmoji()
 
-    createDiv 'change spacing'
+    createDiv 'drawing'
+    createCheckbox('auto draw ', UI.auto).changed ->
+      UI.auto = @checked()
+    createCheckbox('wrap around ', UI.wrap).changed ->
+      UI.wrap = @checked()
+    createSlider( 1, 17, UI.symmetry ).input ->
+      UI.symmetry = @value()
+    createSpan 'symmetry '
+    createSlider( 1, 64, UI.size ).input ->
+      UI.size = @value()
     createSpan 'size '
-    createSlider( 1, 64, UI.size ).input( changeSize )
+    createSlider( 1, 100, UI.spacing ).input ->
+      UI.spacing = @value()
     createSpan 'spacing '
-    createSlider( 1, 100, UI.spacing ).input( changeSpacing )
-
-    # Waiting on https://github.com/processing/p5.js/issues/1085
-    # div.child createDiv 'load a background image'
-    # div.child createFileInput loadBg
 
 loadBg = (file) ->
   return unless file.type is 'image'
   loadImage file.data, (img) ->
     resizeCanvas img.width, img.height
     image img, 0, 0
-
-changeSize = (event) ->
-  UI.size = parseInt(event.target.value)
-
-changeSpacing = (event) ->
-  UI.spacing = parseInt(event.target.value)
 
 changeEmoji = ->
   input = emojiInput.value()

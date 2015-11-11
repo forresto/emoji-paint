@@ -33,7 +33,7 @@ window.draw = ->
   return unless auto and emoji
   x = autoX + spacing * Math.cos autoAngle
   y = autoY + spacing * Math.sin autoAngle
-  drawAndWrap emoji, x, y, autoX, autoY
+  drawWithSymmetry emoji, x, y, autoX, autoY
   autoX = x % width
   autoY = y % height
   autoAngle += autoAngleDelta
@@ -42,7 +42,6 @@ window.draw = ->
     autoAngleDelta = 2*Math.random() - 1
     autoAngleDeltaDelta = 0.2*Math.random() - 0.1
     emoji = UI.palette[Math.floor(Math.random()*UI.palette.length)]
-    console.log emoji
     UI.emoji = emoji
 
 
@@ -61,7 +60,7 @@ mouseUp = (event) ->
   y = mouseY or touchY
   return unless (calcDistance(x, y, pressedX, pressedY) <= wiggle)
   emoji = UI.emoji
-  drawAndWrap emoji, x, y, x, y-1
+  drawWithSymmetry emoji, x, y, x, y-1
 
 touchMove = (event) ->
   return unless touchIsDown
@@ -79,9 +78,21 @@ move = (x, y) ->
   return unless (firstInStroke and distanceFromLast > wiggle) or (distanceFromLast > spacing)
   firstInStroke = false
   emoji = UI.emoji
-  drawAndWrap emoji, x, y, lastX, lastY
+  drawWithSymmetry emoji, x, y, lastX, lastY
   lastX = x
   lastY = y
+
+drawWithSymmetry = (emoji, x, y, px, py) ->
+  {symmetry} = UI
+  w = width/2
+  h = height/2
+  for i in [0..symmetry]
+    angle = TAU/symmetry * i
+    translate w, h
+    rotate angle
+    drawAndWrap emoji, x-w, y-h, px-w, py-h
+    rotate -angle
+    translate -w, -h
 
 drawAndWrap = (emoji, x, y, px, py) ->
   {size, wrap} = UI
@@ -90,22 +101,14 @@ drawAndWrap = (emoji, x, y, px, py) ->
   drawOne emoji, x, y, size, angle
 
   return unless wrap
-  if x < half
-    drawOne emoji, x+width, y, size, angle
-    if y < half
-      drawOne emoji, x+width, y+height, size, angle
-  if x > width - half
-    drawOne emoji, x-width, y, size, angle
-    if y > height - half
-      drawOne emoji, x-width, y-height, size, angle
-  if y < half
-    drawOne emoji, x, y+height, size, angle
-    if x > width - half
-      drawOne emoji, x-width, y+height, size, angle
-  if y > height - half
-    drawOne emoji, x, y-height, size, angle
-    if x < half
-      drawOne emoji, x+width, y-height, size, angle
+  drawOne emoji, x+width, y, size, angle
+  drawOne emoji, x+width, y+height, size, angle
+  drawOne emoji, x-width, y, size, angle
+  drawOne emoji, x-width, y-height, size, angle
+  drawOne emoji, x, y+height, size, angle
+  drawOne emoji, x-width, y+height, size, angle
+  drawOne emoji, x, y-height, size, angle
+  drawOne emoji, x+width, y-height, size, angle
 
 drawOne = (emoji, x, y, size, angle) ->
   half = size/2
